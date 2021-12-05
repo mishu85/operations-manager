@@ -9,6 +9,7 @@ from functools import wraps
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 from dotenv import load_dotenv
+import os
 
 # https://www.youtube.com/watch?v=WxGBoY5iNXY&ab_channel=PrettyPrinted (34:00)
 
