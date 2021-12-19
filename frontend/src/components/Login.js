@@ -33,6 +33,10 @@ export default function Login() {
     }
   };
 
+  const handleSignup = () => {
+    Auth.getInstance().isAuthenticated() ? navigate("/") : navigate("/signup");
+  };
+
   return (
     <div>
       <h1>Login page!</h1>
@@ -65,6 +69,7 @@ export default function Login() {
             </Button>
           </Paper>
         </form>
+        <Button onClick={handleSignup}>Signup</Button>
       </div>
     </div>
   );

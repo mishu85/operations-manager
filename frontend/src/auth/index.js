@@ -1,7 +1,7 @@
 export default class Auth {
   // singleton design pattern
 
-  static instance = null; //???
+  static instance = null; // :)
 
   constructor() {
     if (Auth.instance) {
@@ -25,6 +25,7 @@ export default class Auth {
       let myUser = JSON.parse(data);
       this.myUser = myUser;
       this.authenticated = true;
+      //console.log(Auth.getInstance().getMyUser());
       return;
     }
     this.authenticated = false;

@@ -13,6 +13,8 @@ import os
 
 # https://www.youtube.com/watch?v=WxGBoY5iNXY&ab_channel=PrettyPrinted (34:00)
 
+# conda install -c conda-forge python-dotenv
+
 load_dotenv("local.env")
 
 app = Flask(__name__)
@@ -61,6 +63,12 @@ class Todo(db.Model):
     text = db.Column(db.String(50))
     complete = db.Column(db.Boolean)
     user_id = db.Column(db.Integer)
+
+
+class OpSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Todo
+        load_instance = True
 
 
 def check_token(wrapped_func):
@@ -122,12 +130,24 @@ def get_user(current_user, public_id):
 @ app.route("/user", methods=["POST"])
 def submit_user():
     data = request.get_json()
+    #dataD = request.get_data()
+    # print("dataD: ", dataD) #b'{"name":"Vivi","password":"Vivi0"}'
+    # print("request: ", request) #<Request 'http://127.0.0.1:5000/user' [POST]>
+    # print("data: ", data) #{'name': 'Vivi', 'password': 'Vivi0'}
+
     hashed_password = generate_password_hash(data['password'], method="sha256")
     new_user = User(public_id=str(uuid.uuid4()),
                     name=data["name"], password=hashed_password, admin=False)
     db.session.add(new_user)
     db.session.commit()
-    return jsonify({"message": "New user created"})
+    token_payload = {"public_id": new_user.public_id,
+                     'exp': datetime.datetime.utcnow()+datetime.timedelta(minutes=100)}
+    token = jwt.encode(token_payload, app.config["SECRET_KEY"])
+    me_data = UserSchema(exclude=["id", "password"]).dump(new_user)
+
+    print({"message": "New user created via React"})
+    print("submit/data:", data)
+    return jsonify({"message": "New user created", "token": token, "me": me_data})
 
 
 @ app.route("/user/<public_id>", methods=["PUT"])
@@ -194,7 +214,10 @@ def login():
         token_payload = {"public_id": user.public_id,
                          'exp': datetime.datetime.utcnow()+datetime.timedelta(minutes=100)}
         token = jwt.encode(token_payload, app.config["SECRET_KEY"])
-        return jsonify({'token': token})
+        me_data = UserSchema(exclude=["id", "password"]).dump(user)
+        print("login/me_data:", me_data)
+        print("login/auth:", auth)
+        return jsonify({'token': token, 'me': me_data})
     return make_response("Could not verify3", 401, {'WWW-Authenticate': 'Basic realm="Login required!"'})
 
 
@@ -305,17 +328,17 @@ def show_my_operations(current_user):
     return jsonify({"operations: ": output})
 
 
-@ app.route("/operations/<op_id>", methods=["POST"])  # !!!
+@ app.route("/operations/<op_id>", methods=["PUT"])  # !!!
 @ check_token
 def modify_operations(current_user, op_id):
     op = Todo.query.filter_by(id=op_id).first()
     if op.user_id == current_user.public_id:
-        db.session.get(op)
+        data = request.get_json()
+        op.text = data["text"]
         db.session.commit()
+        return "", 204
     else:
-        return jsonify({'message': "You can modify only your operations"})
-
-    return ""
+        return jsonify({'message': "You can modify only your operations"}), 403
 
 
 @ app.route("/operations/<op_id>", methods=['DELETE'])
@@ -332,6 +355,17 @@ def delete_operation(current_user, op_id):
             return jsonify({"message": "Operation couldn't be deleted"})
     else:
         return jsonify({"message": "Deleting an operation is allowed only for admin"})
+
+
+@app.route("/operations/<op_id>/complete", methods=["GET"])
+@check_token
+def mark_as_complete(current_user, op_id):
+    if current_user.admin == True:
+        op = Todo.query.filter_by(id=op_id).first()
+        if op:
+            op.complete = True
+            db.session.commit()
+            return "", 204
 
 
 if __name__ == "__main__":
