@@ -35,7 +35,7 @@ export default function Home() {
       setUserName(userMe.name);
       setUserPublicId(userMe.public_id);
       setUserAdmin(userMe.admin);
-      const r = getOperations();
+      getOperations();
     }
   }, []);
 
@@ -112,16 +112,17 @@ export default function Home() {
               <Link to="/admin">Do the admin job</Link>
             </div>
           ) : null}
-          <div>
-            <br />
-
-            {showOp ? "Multe operatii pe creier" : null}
-          </div>
-          {operations.length > 0 ? (
+          {showOp && operations.length > 0 ? (
             <div>
               <ul>
                 {operations.map((op) => (
-                  <MediaCard name={op.name} text={op.text} />
+                  <MediaCard
+                    key={op.id}
+                    name={op.name}
+                    text={op.text}
+                    editableName={false}
+                    editableText={true}
+                  />
                 ))}
               </ul>
             </div>
