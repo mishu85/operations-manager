@@ -23,6 +23,12 @@ export default class Auth {
     let data = localStorage.getItem("myUser");
     if (data) {
       let myUser = JSON.parse(data);
+      const isTokenExpired = (token) =>
+        Date.now() >= JSON.parse(atob(token.split(".")[1])).exp * 1000;
+      if (isTokenExpired(myUser.token)) {
+        this.logout();
+        return;
+      }
       this.myUser = myUser;
       this.authenticated = true;
       //console.log(Auth.getInstance().getMyUser());

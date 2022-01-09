@@ -130,7 +130,7 @@ def get_user(current_user, public_id):
 @ app.route("/user", methods=["POST"])
 def submit_user():
     data = request.get_json()
-    #dataD = request.get_data()
+    # dataD = request.get_data()
     # print("dataD: ", dataD) #b'{"name":"Vivi","password":"Vivi0"}'
     # print("request: ", request) #<Request 'http://127.0.0.1:5000/user' [POST]>
     # print("data: ", data) #{'name': 'Vivi', 'password': 'Vivi0'}
@@ -297,7 +297,9 @@ def get_one_operation(current_user, op_id):
 @ app.route("/operations", methods=["POST"])
 @ check_token
 def create_operation(current_user):
+    print("it starts")
     data = request.get_json()
+    print("Data:", data)
     new_operation = Todo(
         text=data['text'], complete=False, user_id=current_user.public_id)
     print("create_op_current_user: ", current_user,
@@ -366,6 +368,37 @@ def mark_as_complete(current_user, op_id):
             op.complete = True
             db.session.commit()
             return "", 204
+
+
+@app.route("/operations/<op_id>/ongoing", methods=["GET"])
+@check_token
+def mark_as_ongoing(current_user, op_id):
+    if current_user.admin == True:
+        op = Todo.query.filter_by(id=op_id).first()
+        if op:
+            op.complete = False
+            db.session.commit()
+            return "", 204
+
+
+@app.route("/data", methods=["GET"])
+@check_token
+def retrive_full_data(current_user):
+    if current_user.admin != True:
+        return "", 401
+    else:
+        data = []
+        users = User.query.all()
+        for user in users:
+            data.append({
+                "name": user.name,
+                "public_id": user.public_id,
+                "operations": Todo.query.filter_by(user_id=user.public_id).count(),
+                # !!!!!
+                "completed": Todo.query.filter_by(user_id=user.public_id, complete=True).count(),
+                "role": "Admin" if user.admin == True else "User"
+            })
+        return jsonify({"data": data})
 
 
 if __name__ == "__main__":
