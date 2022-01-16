@@ -7,7 +7,11 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Auth from "../../auth";
 import { useState, useEffect } from "react";
-import { markOperation, unmarkOperation } from "../../api/operationsApi";
+import {
+  markOperation,
+  unmarkOperation,
+  modifyOperation,
+} from "../../api/operationsApi";
 
 const NameRow = (props) => {
   return (
@@ -38,11 +42,23 @@ export default function MediaCard(props) {
     props.editable ? "fff" : props.initialValue === true ? "#bbddaa" : "#ddbbaa"
   );
   const [text, setText] = useState(props.text);
+  const [modifying, setModifying] = useState(false);
 
   const handleMark = async () => {
     marked ? await unmarkOperation(props.id) : await markOperation(props.id);
     setBackground(!marked === true ? "#bbddaa" : "#ddbbaa");
     setMarked(!marked);
+  };
+
+  const handleModify = async () => {
+    setModifying(true);
+    return;
+  };
+
+  const handleModifySubmit = async () => {
+    setModifying(false);
+    await modifyOperation(props.id, text);
+    await props.onChange();
   };
 
   return (
@@ -59,10 +75,12 @@ export default function MediaCard(props) {
       <CardContent>
         <NameRow value={props.name} />
         <TextRow
-          editable={props.editable}
+          editable={props.editable || modifying}
           value={props.text}
           onChange={(value) => {
-            props.onDirtyChange(value !== (props.text ?? ""));
+            if (props.editable === true) {
+              props.onDirtyChange(value !== (props.text ?? ""));
+            }
             setText(value);
           }}
         />
@@ -82,7 +100,17 @@ export default function MediaCard(props) {
                 Mark
               </Button>
             ) : null}
-            <Button size="small">User Details</Button>
+            {Auth.getInstance().getMyUser().me.public_id === props.user_id ? (
+              modifying === false ? (
+                <Button size="small" onClick={() => handleModify()}>
+                  Modify
+                </Button>
+              ) : (
+                <Button size="small" onClick={() => handleModifySubmit()}>
+                  Submit
+                </Button>
+              )
+            ) : null}
           </div>
         )}
       </CardActions>

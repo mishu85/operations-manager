@@ -166,6 +166,9 @@ export default function Home() {
                     editable={false}
                     initialValue={op.complete}
                     user_id={op.user_id}
+                    onChange={async () => {
+                      await getOperations();
+                    }}
                   />
                 ))}
               </ul>

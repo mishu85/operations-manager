@@ -57,6 +57,11 @@ async function deleteOperation(op_id) {
   return;
 }
 
+async function modifyOperation(op_id, text) {
+  await TheHttpClient().put("/operations/" + op_id, { text: text });
+  return;
+}
+
 const Vari = "Blabla";
 
 export {
@@ -69,4 +74,5 @@ export {
   changeRole,
   getUserOperations,
   deleteOperation,
+  modifyOperation,
 };
