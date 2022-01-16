@@ -27,6 +27,11 @@ const TextRow = (props) => {
       label="Text"
       defaultValue={props.value}
       onChange={(event) => props.onChange(event.target.value)}
+      onKeyPress={(event) => {
+        if (event.key === "Enter") {
+          props.onEnterKeyPress();
+        }
+      }}
     />
   ) : (
     <Typography variant="body2" color="text.secondary">
@@ -82,6 +87,13 @@ export default function MediaCard(props) {
               props.onDirtyChange(value !== (props.text ?? ""));
             }
             setText(value);
+          }}
+          onEnterKeyPress={() => {
+            if (props.editable) {
+              props.onSubmit({ text: text });
+            } else if (modifying) {
+              handleModifySubmit();
+            }
           }}
         />
       </CardContent>
