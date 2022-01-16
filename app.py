@@ -274,6 +274,7 @@ def get_all_operations():
         op["id"] = operation.id
         op["text"] = operation.text
         op["complete"] = operation.complete
+        op["user_id"] = operation.user_id
         output.append(op)
 
     return jsonify({"operations": output})
@@ -383,7 +384,7 @@ def mark_as_ongoing(current_user, op_id):
 
 @app.route("/data", methods=["GET"])
 @check_token
-def retrive_full_data(current_user):
+def retrieve_users_data(current_user):
     if current_user.admin != True:
         return "", 401
     else:
@@ -397,6 +398,23 @@ def retrive_full_data(current_user):
                 # !!!!!
                 "completed": Todo.query.filter_by(user_id=user.public_id, complete=True).count(),
                 "role": "Admin" if user.admin == True else "User"
+            })
+        return jsonify({"data": data})
+
+
+@app.route("/userops/<user_public_id>", methods=["GET"])
+@check_token
+def retrieve_user_operations(current_user, user_public_id):
+    if current_user.admin != True:
+        return "", 401
+    else:
+        data = []
+        operations = Todo.query.filter_by(user_id=user_public_id)
+        for operation in operations:
+            data.append({
+                "text": operation.text,
+                "complete": operation.complete,
+                "operation_id": operation.id,
             })
         return jsonify({"data": data})
 

@@ -46,6 +46,17 @@ async function changeRole(public_id, role) {
   }
 }
 
+async function getUserOperations(user_id) {
+  const resp = await TheHttpClient().get("/userops/" + user_id);
+  // console.log("opsApi:", resp.data.data);
+  return resp.data.data;
+}
+
+async function deleteOperation(op_id) {
+  await TheHttpClient().delete("/operations/" + op_id);
+  return;
+}
+
 const Vari = "Blabla";
 
 export {
@@ -56,4 +67,6 @@ export {
   postOperation,
   receiveData,
   changeRole,
+  getUserOperations,
+  deleteOperation,
 };

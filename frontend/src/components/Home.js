@@ -165,6 +165,7 @@ export default function Home() {
                     text={op.text}
                     editable={false}
                     initialValue={op.complete}
+                    user_id={op.user_id}
                   />
                 ))}
               </ul>

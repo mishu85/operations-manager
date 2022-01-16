@@ -18,14 +18,39 @@ import Paper from "@mui/material/Paper";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import { useEffect } from "react";
-import { receiveData } from "../api/operationsApi";
+import {
+  receiveData,
+  changeRole,
+  getUserOperations,
+  deleteOperation,
+} from "../api/operationsApi";
 import { Link } from "react-router-dom";
-import { changeRole } from "../api/operationsApi";
+// import { changeRole } from "../api/operationsApi";
 
 function Row(props) {
   const { row } = props;
   const [open, setOpen] = React.useState(false);
   const [currentRole, setCurrentRole] = React.useState(props.row.role);
+  const [userOps, setUserOps] = React.useState([]);
+
+  const getUserOps = async (user_id, role) => {
+    console.log("step1", user_id, role);
+    const response = await getUserOperations(user_id, role);
+    response.length === 0 ? setUserOps([]) : setUserOps(response);
+    console.log(response);
+    return;
+  };
+
+  const handleDeleteOp = async (op_id) => {
+    await deleteOperation(op_id);
+    const foundOperationIndex = userOps.findIndex(
+      (op) => op.operation_id === op_id
+    );
+    const newUserOps = userOps.slice();
+    newUserOps.splice(foundOperationIndex, 1);
+    setUserOps(newUserOps);
+    props.onOperationsCountChange(newUserOps.length, row.public_id);
+  };
 
   const handleRole = async (public_id, role) => {
     await changeRole(public_id, role)
@@ -38,8 +63,6 @@ function Row(props) {
       .then(console.log("role:", currentRole));
   };
 
-  // useEffect(() => {}, [currentRole]);
-
   return (
     <React.Fragment>
       <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
@@ -48,6 +71,9 @@ function Row(props) {
             aria-label="expand row"
             size="small"
             onClick={() => {
+              if (!open) {
+                getUserOps(row.public_id, row.role);
+              }
               setOpen(!open);
               open ? console.log("BACK") : console.log("ACTION");
             }}
@@ -80,32 +106,45 @@ function Row(props) {
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
               <Typography variant="h6" gutterBottom component="div">
-                Entries
+                {row.name}'s Entries
               </Typography>
-              {/* <Table size="small" aria-label="purchases">
+              <Table size="small" aria-label="purchases">
                 <TableHead>
-                  <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Customer</TableCell>
-                    <TableCell align="right">Amount</TableCell>
-                    <TableCell align="right">Total price ($)</TableCell>
-                  </TableRow>
+                  {userOps.length > 0 ? (
+                    <TableRow>
+                      <TableCell>Task</TableCell>
+                      <TableCell>Status</TableCell>
+                    </TableRow>
+                  ) : (
+                    <TableRow>
+                      <TableCell>No operations to display</TableCell>
+                    </TableRow>
+                  )}
                 </TableHead>
                 <TableBody>
-                  {row.history.map((historyRow) => (
-                    <TableRow key={historyRow.date}>
-                      <TableCell component="th" scope="row">
-                        {historyRow.date}
-                      </TableCell>
-                      <TableCell>{historyRow.customerId}</TableCell>
-                      <TableCell align="right">{historyRow.amount}</TableCell>
-                      <TableCell align="right">
-                        {Math.round(historyRow.amount * row.price * 100) / 100}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {userOps.length > 0
+                    ? userOps.map((ops) => (
+                        <TableRow key={ops.operation_id}>
+                          <TableCell component="th" scope="row">
+                            {ops.text}
+                          </TableCell>
+                          <TableCell>
+                            {ops.complete ? "Completed" : "Ongoing"}
+                          </TableCell>
+                          <TableCell align="right">
+                            <button
+                              onClick={() => {
+                                handleDeleteOp(ops.operation_id);
+                              }}
+                            >
+                              Delete Operation
+                            </button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    : null}
                 </TableBody>
-              </Table> */}
+              </Table>
             </Box>
           </Collapse>
         </TableCell>
@@ -124,8 +163,15 @@ export default function CollapsibleTable() {
 
   const handleRoleChange = (role, userId) => {
     const foundUserIndex = data.findIndex((user) => user.public_id == userId);
-    const newData = data;
+    const newData = data.slice(); //why a new variable?
     newData[foundUserIndex].role = role;
+    setData(newData);
+  };
+
+  const handleOperationsCountChange = (operationsCount, userId) => {
+    const foundUserIndex = data.findIndex((user) => user.public_id == userId);
+    const newData = data.slice(); //why a new variable?
+    newData[foundUserIndex].operations = operationsCount;
     setData(newData);
   };
 
@@ -148,7 +194,12 @@ export default function CollapsibleTable() {
           </TableHead>
           <TableBody>
             {data.map((row) => (
-              <Row key={row.name} row={row} onRoleChange={handleRoleChange} />
+              <Row
+                key={row.name}
+                row={row}
+                onRoleChange={handleRoleChange}
+                onOperationsCountChange={handleOperationsCountChange}
+              />
             ))}
           </TableBody>
         </Table>
