@@ -24,6 +24,12 @@ const NameRow = (props) => {
 const TextRow = (props) => {
   return props.editable ? (
     <TextField
+      autoFocus
+      inputRef={(input) => {
+        if (input != null) {
+          input.focus();
+        }
+      }}
       label="Text"
       defaultValue={props.value}
       onChange={(event) => props.onChange(event.target.value)}
@@ -56,6 +62,7 @@ export default function MediaCard(props) {
   };
 
   const handleModify = async () => {
+    //async?
     setModifying(true);
     return;
   };

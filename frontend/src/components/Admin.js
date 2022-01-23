@@ -48,8 +48,12 @@ function Row(props) {
     );
     const newUserOps = userOps.slice();
     newUserOps.splice(foundOperationIndex, 1);
+    props.onOperationsCountChange(
+      newUserOps.length,
+      row.public_id,
+      userOps[foundOperationIndex].complete
+    );
     setUserOps(newUserOps);
-    props.onOperationsCountChange(newUserOps.length, row.public_id);
   };
 
   const handleRole = async (public_id, role) => {
@@ -168,10 +172,17 @@ export default function CollapsibleTable() {
     setData(newData);
   };
 
-  const handleOperationsCountChange = (operationsCount, userId) => {
+  const handleOperationsCountChange = (
+    operationsCount,
+    userId,
+    isCompleted
+  ) => {
     const foundUserIndex = data.findIndex((user) => user.public_id == userId);
     const newData = data.slice(); //why a new variable?
     newData[foundUserIndex].operations = operationsCount;
+    if (isCompleted === true) {
+      --newData[foundUserIndex].completed;
+    }
     setData(newData);
   };
 
